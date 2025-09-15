@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Navy and Blue Modern Professional — Embedded Canva Presentation</title>
-  <meta name="description" content="Embedded Canva presentation: Navy and Blue Modern Professional Social Media Strategy Presentation by Mark">
+  <title>English Presentation</title>
+  <meta name="description" content="Embedded Canva presentation by Mark">
   <style>
     :root{
       --bg:#0f1724;
