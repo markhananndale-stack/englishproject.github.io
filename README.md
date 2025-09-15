@@ -12,6 +12,8 @@
       --muted:#9aa4b2;
       --accent:#0ea5e9;
     }
+
+https://www.canva.com/design/DAGy8KwwdJs/udhNfbvthbFCh3SirkYvug/view
     html,body{height:100%;margin:0;font-family:Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; background:linear-gradient(180deg,var(--bg),#071024);color:#e6eef8}
     .wrap{
       max-width:1100px;margin:40px auto;padding:28px;border-radius:12px;background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));box-shadow:0 10px 30px rgba(2,6,23,0.6);
