@@ -2,524 +2,333 @@
 <html lang="en">
 <head>
     <meta charset="utf-8" />
-    <title>How Engines Work — Interactive Explainer</title>
+    <title>Engine Simulator — 3 to 12 Cylinders</title>
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <style>
-        :root{
-            --bg:#0b1220;
-            --panel:#0f1724;
-            --accent:#ff8c42;
-            --muted:#9aa8bf;
-            --glass:rgba(255,255,255,0.04);
-            --card:#0b1220;
-        }
-        html,body{height:100%;margin:0;font-family:Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;}
-        body{background:linear-gradient(180deg,#09101a 0%, #07101a 100%);color:#e6eef8;display:flex;align-items:flex-start;justify-content:center;padding:24px;box-sizing:border-box;}
-        .app{width:1200px;max-width:calc(100% - 48px);display:grid;grid-template-columns:1fr 360px;gap:20px;align-items:start;}
-        header{grid-column:1/3;display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
-        header h1{font-size:20px;margin:0;color:var(--accent);}
-        header p{margin:0;color:var(--muted);font-size:13px}
-        .stage{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:12px;padding:18px;box-shadow:0 6px 18px rgba(2,6,23,0.6);min-height:640px;display:flex;flex-direction:column;}
-        .canvas-wrap{flex:1;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;border-radius:8px;background:linear-gradient(180deg,#08111a 0%, #07101a 100%);border:1px solid rgba(255,255,255,0.02);}
-        .controls{display:flex;gap:8px;margin-top:12px;align-items:center;}
-        .btn{background:var(--panel);border:1px solid rgba(255,255,255,0.04);color:var(--muted);padding:8px 10px;border-radius:8px;font-size:13px;cursor:pointer}
-        .btn.primary{background:linear-gradient(90deg,var(--accent),#ffb788);color:#061018;border:none}
-        .panel{background:var(--panel);padding:14px;border-radius:12px;border:1px solid rgba(255,255,255,0.03);height:640px;overflow:auto;box-shadow:0 6px 18px rgba(2,6,23,0.6);}
-        .control-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
-        label{font-size:12px;color:var(--muted);min-width:100px}
-        input[type=range]{width:100%}
-        .info{font-size:13px;color:var(--muted);line-height:1.45}
-        .part{cursor:pointer;transition:transform .12s ease}
-        .part:hover{transform:scale(1.03)}
-        .highlight{filter:drop-shadow(0 6px 18px rgba(255,140,66,0.12));}
-        .legend{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
-        .legend .item{background:var(--glass);padding:6px 8px;border-radius:8px;font-size:12px;color:var(--muted)}
-        .status{margin-top:10px;font-size:13px;color:var(--muted)}
-        /* Responsive */
-        @media (max-width:1000px){
-            .app{grid-template-columns:1fr;max-width:900px}
-            header{flex-direction:column;align-items:flex-start;gap:8px}
-            .panel{order:2;height:auto}
-        }
-
-        /* SVG layout helpers */
-        svg{max-width:100%;height:auto;display:block}
-
-        /* Basic animations */
-        .spark{fill:rgba(255,200,80,0.95);filter:drop-shadow(0 6px 20px rgba(255,160,50,0.25))}
-        .smoke{fill:rgba(200,200,210,0.06)}
-        /* Keyframes for valve motion toggles are controlled in JS for smoother control */
+        :root{--bg:#0f1724;--panel:#0b1220;--accent:#ffb86b;--muted:#9aa7c7}
+        html,body{height:100%;margin:0;font-family:Inter,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:#e6eef8}
+        .app{display:flex;flex-direction:column;gap:12px;padding:14px;max-width:1100px;margin:0 auto}
+        header{display:flex;align-items:center;gap:14px}
+        h1{font-size:18px;margin:0}
+        .controls{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+        .control{background:var(--panel);padding:8px;border-radius:8px;font-size:13px;color:var(--muted);display:flex;gap:8px;align-items:center}
+        input[type=range]{width:220px}
+        button{background:transparent;border:1px solid #203045;color:var(--accent);padding:8px 12px;border-radius:8px;cursor:pointer}
+        button.play{border-color:var(--accent);color:#071020}
+        main{display:flex;gap:12px}
+        canvas{background:linear-gradient(180deg,#071124 0%, #07162a 100%);border-radius:8px;box-shadow:0 10px 30px rgba(0,0,0,0.6)}
+        .info{width:320px;background:linear-gradient(180deg,#07142855, #02102433);padding:12px;border-radius:8px;color:var(--muted);font-size:13px}
+        .legend{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+        .chip{background:#081426;padding:6px 8px;border-radius:6px;color:#9fb3d8;font-size:12px}
+        .phase{display:flex;gap:6px;align-items:center;margin-top:8px}
+        .dot{width:12px;height:12px;border-radius:50%}
+        .phase div{font-size:13px}
+        .phase .intake{background:#5fb3ff}
+        .phase .compression{background:#9fb3d8}
+        .phase .power{background:#ff9671}
+        .phase .exhaust{background:#8a8fa6}
+        footer{color:#64758f;font-size:12px;margin-top:6px}
+        .small{font-size:12px;color:#93a7c4}
     </style>
 </head>
 <body>
-    <div class="app" id="app">
+    <div class="app">
         <header>
-            <div>
-                <h1>Engine Visualizer — 4-Cycle Engine</h1>
-                <p>Interactive explainer. Click parts to learn. Use controls to animate and change speed.</p>
-            </div>
-            <div>
-                <small style="color:var(--muted)">Built for learning — simplified schematics, not engineering drawings.</small>
+            <h1>Engine Simulator — choose 3 to 12 cylinders</h1>
+            <div class="controls">
+                <div class="control">
+                    Cylinders
+                    <input id="cylCount" type="range" min="3" max="12" value="6" />
+                    <strong id="cylLabel">6</strong>
+                </div>
+                <div class="control">
+                    Speed
+                    <input id="speed" type="range" min="0" max="4" step="0.01" value="1" />
+                    <strong id="speedLabel">1x</strong>
+                </div>
+                <button id="toggle" class="play">Start</button>
+                <div class="control small">Four-stroke cycle (720°): Intake → Compression → Power → Exhaust</div>
             </div>
         </header>
 
-        <section class="stage" aria-label="Animation stage">
-            <div class="canvas-wrap" id="canvasWrap">
-                <!-- SVG illustrating a simple inline 4-stroke engine with one cylinder, piston, crank, valves -->
-                <svg id="engineSVG" viewBox="0 0 900 560" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Engine schematic">
-                    <defs>
-                        <linearGradient id="metal" x1="0" x2="1">
-                            <stop offset="0" stop-color="#b0b8c6"/>
-                            <stop offset="1" stop-color="#6e7885"/>
-                        </linearGradient>
-                        <linearGradient id="glassGrad" x1="0" x2="0" y1="0" y2="1">
-                            <stop offset="0" stop-color="rgba(255,255,255,0.06)"/>
-                            <stop offset="1" stop-color="rgba(255,255,255,0.02)"/>
-                        </linearGradient>
-                        <filter id="softShadow" x="-50%" y="-50%" width="200%" height="200%">
-                            <feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#000" flood-opacity="0.45"/>
-                        </filter>
-                    </defs>
+        <main>
+            <canvas id="scene" width="820" height="420"></canvas>
 
-                    <!-- Background guide -->
-                    <rect x="10" y="10" width="880" height="540" rx="10" fill="url(#glassGrad)"/>
+            <aside class="info">
+                <div class="small">Simulation explains pistons, connecting rods and firing phases. Use the slider to change the number of cylinders and speed. Each cylinder's cycle spans 720° of crank rotation; firing order is evenly distributed.</div>
 
-                    <!-- Engine block -->
-                    <g id="engineBlock" transform="translate(60,40)">
-                        <rect x="0" y="20" width="540" height="340" rx="8" fill="#0f1a24" stroke="#152232" stroke-width="2"/>
-                        <!-- Cylinder chamber -->
-                        <g id="cylinderGroup" transform="translate(220,40)">
-                            <rect x="-70" y="0" width="220" height="260" rx="8" fill="#0c141a" stroke="#22313f" stroke-width="2"/>
-                            <!-- Cylinder inner -->
-                            <rect x="-56" y="16" width="192" height="200" rx="6" fill="#0b1220" stroke="#1a2430" stroke-width="1"/>
-                            <!-- Spark plug -->
-                            <g id="sparkPlug" class="part" data-part="sparkPlug" transform="translate(70,12)">
-                                <rect x="0" y="0" width="18" height="34" rx="3" fill="#dfe7ef" stroke="#485767" stroke-width="1"/>
-                                <rect x="4" y="6" width="10" height="12" rx="1" fill="#abb9c8"/>
-                                <circle cx="9" cy="30" r="3" fill="#ffc28a"/>
-                            </g>
-                            <!-- Valves -->
-                            <g id="valves" transform="translate(30,-10)">
-                                <g id="intakeValve" class="part" data-part="intakeValve" transform="translate(0,0)">
-                                    <rect x="0" y="0" width="8" height="40" rx="4" fill="#c1c9d3" stroke="#45566b" stroke-width="1"/>
-                                    <circle cx="4" cy="44" r="12" fill="#aeb8c2" stroke="#2b3947" stroke-width="1"/>
-                                </g>
-                                <g id="exhaustValve" class="part" data-part="exhaustValve" transform="translate(60,0)">
-                                    <rect x="0" y="0" width="8" height="40" rx="4" fill="#c1c9d3" stroke="#45566b" stroke-width="1"/>
-                                    <circle cx="4" cy="44" r="12" fill="#aeb8c2" stroke="#2b3947" stroke-width="1"/>
-                                </g>
-                            </g>
-
-                            <!-- Piston assembly -->
-                            <g id="pistonGroup" transform="translate(38,40)">
-                                <g id="piston" class="part" data-part="piston">
-                                    <rect x="0" y="0" width="128" height="120" rx="8" fill="url(#metal)" stroke="#2c3b49" stroke-width="2"/>
-                                    <rect x="6" y="6" width="116" height="18" rx="6" fill="#0b1016" opacity="0.15"/>
-                                </g>
-                                <!-- Piston pin and connecting rod -->
-                                <g id="connRod" transform="translate(64,120)" >
-                                    <rect x="-8" y="-8" width="16" height="160" rx="8" fill="#6f7986" stroke="#22313f" stroke-width="1" transform="rotate(0)"/>
-                                    <circle cx="0" cy="152" r="18" fill="#cbd3db" stroke="#2d3a46" stroke-width="2"/>
-                                </g>
-                            </g>
-
-                        </g>
-
-                        <!-- Crankcase and crankshaft depiction -->
-                        <g id="crankGroup" transform="translate(90,260)">
-                            <rect x="0" y="60" width="420" height="40" rx="6" fill="#071018" stroke="#18222c" stroke-width="1"/>
-                            <g id="crankshaft" transform="translate(220,44)">
-                                <!-- Main journal -->
-                                <circle cx="0" cy="0" r="28" fill="#2f3844" stroke="#12171b" stroke-width="2"/>
-                                <!-- Crank throw -->
-                                <g id="throw" transform="rotate(0)">
-                                    <rect x="-10" y="0" width="20" height="90" rx="8" fill="#6a7682" stroke="#22313f" stroke-width="1"/>
-                                    <circle cx="0" cy="90" r="24" fill="#bcd0db" stroke="#2d3a46" stroke-width="2"/>
-                                </g>
-                            </g>
-                            <!-- Flywheel -->
-                            <g id="flywheel" transform="translate(430,84)">
-                                <circle cx="0" cy="0" r="44" fill="#1b2a36" stroke="#0a1014" stroke-width="2"/>
-                                <circle cx="0" cy="0" r="28" fill="#24313c" stroke="#0d1418" stroke-width="1"/>
-                            </g>
-                        </g>
-
-                    </g>
-
-                    <!-- Overlays for smoke and spark (hidden initially) -->
-                    <g id="sparkFlash" opacity="0">
-                        <polygon points="614,90 626,60 640,86 660,70 652,100 674,112 640,118 632,144 608,120 608,92" class="spark" />
-                    </g>
-
-                    <g id="smokeGroup" opacity="0">
-                        <g transform="translate(520,40) scale(1)">
-                            <ellipse cx="0" cy="0" rx="10" ry="6" class="smoke"/>
-                            <ellipse cx="18" cy="-10" rx="14" ry="8" class="smoke" opacity="0.12"/>
-                            <ellipse cx="-12" cy="-16" rx="18" ry="9" class="smoke" opacity="0.10"/>
-                        </g>
-                    </g>
-
-                    <!-- Labels -->
-                    <g id="labels" transform="translate(20,20)" fill="#9aa8bf" font-size="12">
-                        <text x="200" y="10">Cylinder</text>
-                        <text x="560" y="220">Crankshaft & Flywheel</text>
-                    </g>
-                </svg>
-            </div>
-
-            <div class="controls" role="toolbar" aria-label="Controls">
-                <button class="btn primary" id="playPauseBtn">Play</button>
-                <button class="btn" id="stepBtn">Step</button>
-                <div style="display:flex;flex-direction:column;width:260px">
-                    <label style="font-size:12px;color:var(--muted);margin-bottom:6px">RPM: <span id="rpmLabel">800</span></label>
-                    <input id="rpmRange" type="range" min="200" max="6000" step="10" value="800" />
+                <div class="legend">
+                    <div class="chip">Inline layout</div>
+                    <div class="chip">Four-stroke</div>
+                    <div class="chip">Adjustable speed</div>
+                    <div class="chip">3–12 cylinders</div>
                 </div>
-            </div>
 
-        </section>
-
-        <aside class="panel" aria-label="Information panel">
-            <div style="display:flex;align-items:center;justify-content:space-between">
-                <h3 style="margin:0;color:var(--accent);font-size:16px">Parts & Info</h3>
-                <div style="font-size:12px;color:var(--muted)">Click parts on the diagram</div>
-            </div>
-
-            <div style="margin-top:12px" id="infoBox">
-                <div class="info" id="introText">
-                    Click any engine part to see details here. Use Play to run the 4-stroke animation: Intake, Compression, Power, Exhaust. Adjust RPM for animation speed. Step moves the crank by one step.
+                <div style="margin-top:10px;">
+                    <strong>Selected cylinder:</strong>
+                    <div id="inspect" class="small" style="margin-top:6px">Hover a piston to inspect its stroke and instantaneous pressure hint.</div>
                 </div>
-            </div>
 
-            <div class="legend" aria-hidden="false">
-                <div class="item">Intake Valve</div>
-                <div class="item">Exhaust Valve</div>
-                <div class="item">Piston</div>
-                <div class="item">Crankshaft</div>
-                <div class="item">Spark Plug</div>
-            </div>
+                <div style="margin-top:10px;">
+                    <strong>Phases</strong>
+                    <div class="phase"><div class="dot intake"></div><div>Intake</div></div>
+                    <div class="phase"><div class="dot compression"></div><div>Compression</div></div>
+                    <div class="phase"><div class="dot power"></div><div>Power</div></div>
+                    <div class="phase"><div class="dot exhaust"></div><div>Exhaust</div></div>
+                </div>
 
-            <div class="status" id="statusText" style="margin-top:12px">Status: idle</div>
-
-            <hr style="border:none;height:1px;background:rgba(255,255,255,0.02);margin:12px 0" />
-
-            <div style="font-size:13px;color:var(--muted)">
-                Controls:
-                <ul style="margin:8px 0 12px 16px;padding:0;color:var(--muted)">
-                    <li>Play: animate continuously</li>
-                    <li>Step: advance one cycle stage</li>
-                    <li>RPM: adjust speed of crank rotation</li>
-                </ul>
-            </div>
-
-        </aside>
-
+                <footer>Tip: Increase cylinders to observe overlapping power strokes and smoother torque.</footer>
+            </aside>
+        </main>
     </div>
 
     <script>
-        // Minimal helper utilities
-        const $ = sel => document.querySelector(sel);
-        const $$ = sel => Array.from(document.querySelectorAll(sel));
-
-        // Elements
-        const playPauseBtn = $('#playPauseBtn');
-        const stepBtn = $('#stepBtn');
-        const rpmRange = $('#rpmRange');
-        const rpmLabel = $('#rpmLabel');
-        const statusText = $('#statusText');
-        const infoBox = $('#infoBox');
-        const engineSVG = $('#engineSVG');
-
-        // Parts mapping
-        const parts = {
-            piston: engineSVG.getElementById('piston'),
-            connRod: engineSVG.getElementById('connRod'),
-            crankThrow: engineSVG.getElementById('throw'),
-            crankshaft: engineSVG.getElementById('crankshaft'),
-            flywheel: engineSVG.getElementById('flywheel'),
-            intakeValve: engineSVG.getElementById('intakeValve'),
-            exhaustValve: engineSVG.getElementById('exhaustValve'),
-            sparkPlug: engineSVG.getElementById('sparkPlug'),
-            sparkFlash: engineSVG.getElementById('sparkFlash'),
-            smokeGroup: engineSVG.getElementById('smokeGroup'),
-            pistonGroup: engineSVG.getElementById('pistonGroup')
-        };
+    // Simple inline engine simulation for index.html
+    // - 4-stroke cycles, evenly spaced firing (phase offset = 720° / N)
+    // - Piston vertical motion approximated using kinematic crank-slider formula for a realistic look
+    (() => {
+        const canvas = document.getElementById('scene');
+        const ctx = canvas.getContext('2d');
+        const cylSlider = document.getElementById('cylCount');
+        const cylLabel = document.getElementById('cylLabel');
+        const speedSlider = document.getElementById('speed');
+        const speedLabel = document.getElementById('speedLabel');
+        const toggle = document.getElementById('toggle');
+        const inspect = document.getElementById('inspect');
 
         let running = false;
-        let rpm = Number(rpmRange.value);
-        let angle = 0; // crank angle in degrees
-        let lastTime = null;
-        let animationId = null;
-        const twoPi = Math.PI * 2;
+        let last = 0;
+        let crankAngle = 0; // degrees
+        let rpm = 30; // base speed -> scaled by speed slider
+        let cylinders = parseInt(cylSlider.value,10);
 
-        // Engine geometry parameters for a simple kinematic model
-        const stroke = 180; // piston travel in px (top to bottom)
-        const rod = 220; // connecting rod length approx
-        const crankRadius = 64; // crank throw radius
-
-        // Attach click handlers for parts
-        function partInfo(key){
-            const info = {
-                piston: {
-                    title: 'Piston',
-                    text: 'The piston moves up and down in the cylinder. It transmits force from the expanding gas to the connecting rod and crankshaft.'
-                },
-                connRod: {
-                    title: 'Connecting Rod',
-                    text: 'Connects the piston to the crankshaft. Converts reciprocating motion into rotary motion and vice versa.'
-                },
-                crankshaft: {
-                    title: 'Crankshaft',
-                    text: 'Converts the up-and-down motion of the pistons into rotational motion. The crankshaft is connected to the flywheel.'
-                },
-                intakeValve: {
-                    title: 'Intake Valve',
-                    text: 'Opens to allow the air-fuel mixture into the combustion chamber during the intake stroke.'
-                },
-                exhaustValve: {
-                    title: 'Exhaust Valve',
-                    text: 'Opens to allow exhaust gases to exit the cylinder after combustion during the exhaust stroke.'
-                },
-                sparkPlug: {
-                    title: 'Spark Plug',
-                    text: 'Ignites the compressed air-fuel mixture to produce the power stroke in gasoline engines.'
-                }
-            };
-            return info[key] || {title: key, text: 'No detailed information available.'};
-        }
-
-        // Set up interactive part clicks
-        Array.from(engineSVG.querySelectorAll('.part')).forEach(el => {
-            el.style.cursor = 'pointer';
-            const key = el.getAttribute('data-part');
-            el.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const info = partInfo(key);
-                showInfo(info.title, info.text);
-                highlightPart(el);
-            });
+        cylSlider.addEventListener('input', () => {
+            cylinders = parseInt(cylSlider.value,10);
+            cylLabel.textContent = cylinders;
+            // keep crankAngle continuous; phase offsets will change
         });
 
-        // Display info in side panel
-        function showInfo(title, text){
-            infoBox.innerHTML = `
-                <div style="margin-bottom:8px">
-                    <strong style="color:var(--accent)">${title}</strong>
-                </div>
-                <div style="color:var(--muted);font-size:13px">${text}</div>
-            `;
-        }
+        speedSlider.addEventListener('input', () => {
+            speedLabel.textContent = parseFloat(speedSlider.value).toFixed(2) + 'x';
+        });
 
-        // Highlight function
-        function highlightPart(el){
-            // Remove highlight from others
-            Array.from(engineSVG.querySelectorAll('.part')).forEach(p => p.classList.remove('highlight'));
-            el.classList.add('highlight');
-            setTimeout(()=> el.classList.remove('highlight'), 1800);
-        }
-
-        // Control handlers
-        playPauseBtn.addEventListener('click', () => {
+        toggle.addEventListener('click', () => {
             running = !running;
-            playPauseBtn.textContent = running ? 'Pause' : 'Play';
-            statusText.textContent = running ? 'Status: running' : 'Status: paused';
-            if(running){
-                lastTime = performance.now();
-                animate();
-            } else {
-                cancelAnimationFrame(animationId);
+            toggle.textContent = running ? 'Pause' : 'Start';
+            toggle.classList.toggle('play', !running);
+            last = performance.now();
+            if (running) requestAnimationFrame(loop);
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const mx = e.clientX - rect.left;
+            const my = e.clientY - rect.top;
+            hoveredIndex = hitTestCylinder(mx,my);
+            updateInspectText();
+        });
+        canvas.addEventListener('mouseleave', () => { hoveredIndex = -1; updateInspectText(); });
+
+        let hoveredIndex = -1;
+
+        function degreesToRad(d){ return d*Math.PI/180; }
+
+        function hitTestCylinder(mx,my){
+            // identify which piston rectangle the mouse is over
+            const w = canvas.width, h = canvas.height;
+            const margin = 60;
+            const areaW = w - margin*2;
+            const spacing = areaW / cylinders;
+            for(let i=0;i<cylinders;i++){
+                const x = margin + i*spacing + spacing/2;
+                const pistX = x - 28, pistW = 56;
+                const pistY = 48, pistH = 140;
+                if (mx >= pistX && mx <= pistX + pistW && my >= pistY && my <= pistY + pistH) return i;
             }
-        });
-
-        stepBtn.addEventListener('click', () => {
-            // advance a fixed angle step (simulate firing sequence)
-            advanceAngle(45); // arbitrary step
-            renderFrame();
-        });
-
-        rpmRange.addEventListener('input', (e) => {
-            rpm = Number(e.target.value);
-            rpmLabel.textContent = rpm;
-        });
-
-        // Basic kinematic functions
-        function degToRad(d){ return d * Math.PI / 180; }
-        function radToDeg(r){ return r * 180 / Math.PI; }
-
-        // Given crank angle, compute piston vertical offset relative to top-dead-center
-        function pistonPositionFromAngle(thetaDeg){
-            // theta measured from top dead center clockwise
-            const theta = degToRad(thetaDeg);
-            const r = crankRadius; // crank radius
-            const l = rod;
-            // classic slider-crank: x = r*cos(theta) + sqrt(l^2 - (r*sin(theta))^2)
-            const x = r * Math.cos(theta) + Math.sqrt(Math.max(0, l*l - (r*Math.sin(theta))**2));
-            // Reference: top dead center when theta = 0 -> x = r + l
-            const max = r + l;
-            const tdc = max; // at theta=0
-            // piston displacement from top: d = tdc - x
-            const displacement = tdc - x;
-            // convert to pixel travel scaled to stroke
-            // stroke corresponds to 2*r
-            const pixel = displacement / (2*r) * stroke;
-            return pixel;
+            return -1;
         }
 
-        // Render function updates SVG transforms based on angle
-        function renderFrame(){
-            // Compute piston vertical position
-            const pistonOffset = pistonPositionFromAngle(angle);
-            // The pistonGroup initial transform is translate(38,40)
-            const pistonY = 40 + pistonOffset;
-            parts.pistonGroup.setAttribute('transform', `translate(38,${pistonY})`);
-            // Connecting rod rotation: need angle between piston pin and crankpin
-            // compute crankpin position relative to crank center (in global coordinates)
-            // crank center at translate(90,260) + translate(220,44) => (310,304) offset from SVG origin plus group transforms...
-            // For simplicity we calculate rotation based on angle only to give impression
-            const throwAngle = angle; // degrees
-            parts.crankThrow.setAttribute('transform', `rotate(${throwAngle})`);
-            // Rotate flywheel and crankshaft overall
-            parts.crankshaft.setAttribute('transform', `translate(220,44) rotate(${angle})`);
-            parts.flywheel.setAttribute('transform', `translate(430,84) rotate(${angle})`);
-
-            // Valve motion: simple sinusoidal opening timed to crank angle for 4-stroke cycle
-            // Rough timing: Intake opens ~ 10-160 deg (crank), Exhaust opens ~ 200-350 deg
-            const intakeOpen = valveOpenProfile(angle, 10, 160);
-            const exhaustOpen = valveOpenProfile(angle, 200, 350);
-            // Apply valve translations: move downward when open (positive y)
-            const intakeY = -10 + intakeOpen * 36;
-            const exhaustY = -10 + exhaustOpen * 36;
-            parts.intakeValve.setAttribute('transform', `translate(0,${intakeY})`);
-            parts.exhaustValve.setAttribute('transform', `translate(60,${exhaustY})`);
-
-            // Spark: fire near 360 -> 0 boundary for power stroke (~ around 340..10)
-            const sparkVal = sparkProfile(angle);
-            parts.sparkFlash.setAttribute('opacity', sparkVal > 0 ? 1 : 0);
-            parts.smokeGroup.setAttribute('opacity', sparkVal > 0 ? 1 : 0);
-        }
-
-        // Valve profile: returns 0..1 open amount
-        function valveOpenProfile(angleDeg, start, end){
-            // normalize angle into 0..360
-            let a = ((angleDeg % 360) + 360) % 360;
-            // treat window possibly wrapping
-            if(start < end){
-                if(a < start || a > end) return 0;
-                // ramp in/out using smoothstep
-                const len = end - start;
-                const pos = (a - start) / len;
-                return smoothstep(0,1,pos);
-            } else {
-                // wrap around case
-                if(a < start && a > end) return 0;
-                // map into 0..1
-                let pos = (a >= start) ? (a - start) / ((360 - start) + end) : (a + (360 - start)) / ((360 - start) + end);
-                return smoothstep(0,1,pos);
+        function updateInspectText(){
+            if (hoveredIndex<0){
+                inspect.textContent = 'Hover a piston to inspect its stroke and instantaneous pressure hint.';
+                return;
             }
+            const phaseInfo = cylinderPhaseInfo(hoveredIndex);
+            inspect.innerHTML = `Cylinder ${hoveredIndex+1}: ${phaseInfo.phase} stroke
+            • Angle: ${phaseInfo.angleDeg.toFixed(0)}°
+            • Relative power hint: ${phaseInfo.powerHint}`;
         }
 
-        function smoothstep(a,b,x){
-            const t = Math.max(0, Math.min(1, (x - a) / (b - a)));
-            return t * t * (3 - 2 * t);
+        function cylinderPhaseInfo(i){
+            // compute angle for cylinder i in degrees within 0..720
+            const phaseOffset = 720/cylinders * i;
+            const angle = (crankAngle + phaseOffset) % 720;
+            const phase = (angle>=0 && angle<180) ? 'Intake' :
+                                        (angle<360) ? 'Compression' :
+                                        (angle<540) ? 'Power' : 'Exhaust';
+            // crude power hint: peak at center of power stroke (angle=450)
+            const powerCenter = 450;
+            const dist = Math.abs(((angle - powerCenter)+3600)%720 - powerCenter);
+            const powerHint = phase==='Power' ? `${Math.max(0, (1 - dist/90)).toFixed(2)} (relative)` : '0.00';
+            return { angleDeg: angle, phase, powerHint };
         }
 
-        function sparkProfile(angleDeg){
-            // return strong near angle 350..10
-            let a = ((angleDeg % 360) + 360) % 360;
-            if(a > 350 || a < 10){
-                // stronger near 0
-                const dist = Math.min( Math.abs(a <= 180 ? a : 360 - a), 10);
-                return (10 - dist) / 10;
+        function loop(now){
+            const dt = (now - last)/1000 || 0;
+            last = now;
+            // advance crank angle: base rpm scaled by speed slider (0..4)
+            const speedMult = parseFloat(speedSlider.value);
+            const degPerSec = rpm * 6 * speedMult; // rpm * 360 deg /60 = rpm*6
+            crankAngle = (crankAngle + degPerSec * dt) % 720; // keep in 0..720 for cycles
+            render();
+            if (running) requestAnimationFrame(loop);
+        }
+
+        function render(){
+            const w = canvas.width, h = canvas.height;
+            ctx.clearRect(0,0,w,h);
+
+            // background gradient
+            const g = ctx.createLinearGradient(0,0,0,h);
+            g.addColorStop(0,'#061126'); g.addColorStop(1,'#041426');
+            ctx.fillStyle = g;
+            ctx.fillRect(0,0,w,h);
+
+            // drawing layout
+            const margin = 60;
+            const areaW = w - margin*2;
+            const spacing = areaW / cylinders;
+            const crankY = h - 70;
+            const crankRadius = 22;
+            const conrod = 80;
+            const stroke = 80; // total piston travel (top to bottom)
+            const crankRadiusSim = stroke/2;
+
+            // draw crankshaft center
+            ctx.strokeStyle = '#0f9fff22';
+            ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.arc(w/2, crankY, crankRadius+8, 0, Math.PI*2); ctx.stroke();
+
+            // for each cylinder, compute piston position
+            for(let i=0;i<cylinders;i++){
+                const cx = margin + i*spacing + spacing/2;
+                // phase offset along 720 degrees
+                const phaseOffset = 720/cylinders * i;
+                const thetaDeg = (crankAngle + phaseOffset) % 720;
+                // convert to crank rotation in radians (two revolutions => 720°)
+                const crankRad = degreesToRad(thetaDeg/2); // map 720deg to 360deg crank rotation
+                // kinematic piston displacement using crank-slider:
+                // s = r*cos(theta) + sqrt(l^2 - (r*sin(theta))^2)
+                const r = crankRadiusSim;
+                const l = conrod;
+                const s = r*Math.cos(crankRad) + Math.sqrt(Math.max(0, l*l - (r*Math.sin(crankRad))**2));
+                // normalize s to 0..1 for rendering
+                const sMin = r + (l - Math.sqrt(l*l - (r*r))); // approximate min
+                const sMax = r + l;
+                const norm = (s - sMin) / (sMax - sMin);
+                const pistonTop = 40 + norm*(stroke); // top y
+
+                // draw cylinder wall
+                ctx.fillStyle = '#07162a';
+                ctx.strokeStyle = '#18334a';
+                ctx.lineWidth = 2;
+                ctx.fillRect(cx-28, 20, 56, 160);
+                ctx.strokeRect(cx-28, 20, 56, 160);
+
+                // color by phase
+                const phaseAngle = thetaDeg;
+                let color = '#9fb3d8';
+                if (phaseAngle>=0 && phaseAngle<180) color = '#5fb3ff';        // intake
+                else if (phaseAngle<360) color = '#9fb3d8';                    // compression
+                else if (phaseAngle<540) color = '#ff9671';                    // power
+                else color = '#8a8fa6';                                        // exhaust
+
+                // draw piston
+                ctx.fillStyle = color;
+                ctx.fillRect(cx-26, pistonTop, 52, 28);
+                ctx.strokeStyle = '#07212b';
+                ctx.strokeRect(cx-26, pistonTop, 52, 28);
+
+                // connecting rod
+                const rodX = cx;
+                const rodTopY = pistonTop;
+                // crank pin position relative to crank center (we stagger crank pins around center by phase offset too)
+                const crankPinAngle = degreesToRad(thetaDeg/2);
+                const pinX = w/2 + Math.cos(crankPinAngle)*(crankRadius + 10);
+                const pinY = crankY + Math.sin(crankPinAngle)*(crankRadius + 4);
+
+                ctx.beginPath();
+                ctx.lineWidth = 6;
+                ctx.strokeStyle = '#c9dceeff';
+                ctx.moveTo(rodX, rodTopY+14);
+                ctx.lineTo(pinX, pinY);
+                ctx.stroke();
+
+                // piston rod top (small)
+                ctx.beginPath();
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = '#04121a';
+                ctx.moveTo(cx-12, pistonTop+28);
+                ctx.lineTo(cx-12, pistonTop+34);
+                ctx.moveTo(cx+12, pistonTop+28);
+                ctx.lineTo(cx+12, pistonTop+34);
+                ctx.stroke();
+
+                // draw crank pin
+                ctx.beginPath();
+                ctx.fillStyle = '#202f3a';
+                ctx.arc(pinX, pinY, 8, 0, Math.PI*2);
+                ctx.fill();
+
+                // label cylinder number
+                ctx.fillStyle = '#b8d4ff';
+                ctx.font = '12px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText((i+1), cx, 18);
+
+                // highlight hovered
+                if (i === hoveredIndex){
+                    ctx.strokeStyle = 'rgba(255,255,255,0.14)';
+                    ctx.lineWidth = 3;
+                    ctx.strokeRect(cx-30, 18, 60, 164);
+                }
+
+                // tiny spark / explosion indicator during power stroke peak
+                if (phaseAngle >= 360 && phaseAngle < 540){
+                    // intensity based on proximity to mid-power (450°)
+                    const dist = Math.abs(450 - phaseAngle);
+                    const intensity = Math.max(0, 1 - dist/90);
+                    if (intensity > 0.08){
+                        ctx.beginPath();
+                        ctx.fillStyle = `rgba(255,140,60,${0.25 + 0.75*intensity})`;
+                        ctx.arc(cx, pistonTop - 6, 10 + 12*intensity, 0, Math.PI*2);
+                        ctx.fill();
+                    }
+                }
             }
-            return 0;
+
+            // Draw crankshaft bar and center indicator
+            ctx.fillStyle = '#11202a';
+            ctx.fillRect(0, crankY-8, w, 16);
+            ctx.beginPath();
+            ctx.fillStyle = '#0b6fa6';
+            ctx.arc(w/2, crankY, crankRadius+2, 0, Math.PI*2);
+            ctx.fill();
+
+            // overlay info
+            ctx.fillStyle = '#9fb3d8';
+            ctx.font = '12px sans-serif';
+            ctx.textAlign = 'left';
+            ctx.fillText(`Cylinders: ${cylinders}`, 12, h-12);
+            ctx.fillText(`Crank angle: ${crankAngle.toFixed(1)}°`, 120, h-12);
+            ctx.fillText(`Speed: ${speedSlider.value}x`, 300, h-12);
         }
 
-        // Animation loop
-        function animate(now){
-            animationId = requestAnimationFrame(animate);
-            if(!lastTime) lastTime = now;
-            const dt = (now - lastTime) / 1000; // seconds
-            lastTime = now;
-            if(running){
-                // Convert rpm to degrees per second: rpm/60 revs per sec * 360
-                const degPerSec = (rpm / 60) * 360;
-                angle = (angle + degPerSec * dt) % 360;
-                renderFrame();
-            }
-        }
+        // initial render
+        render();
 
-        // Utility to advance angle by degrees
-        function advanceAngle(deg){
-            angle = (angle + deg) % 360;
-        }
-
-        // Initialize
-        renderFrame();
-        rpmLabel.textContent = rpm;
-
-        // Keyboard controls: space toggles play/pause, arrow keys step
-        window.addEventListener('keydown', (e) => {
-            if(e.code === 'Space'){ e.preventDefault(); playPauseBtn.click(); }
-            if(e.code === 'ArrowRight'){ stepBtn.click(); }
-        });
-
-        // Basic auto-play sample: animate 1-second burst to show engine behavior on load
-        let demoCount = 0;
-        function runDemoPulse(){
-            if(demoCount++ > 0) return;
-            running = true;
-            playPauseBtn.textContent = 'Pause';
-            statusText.textContent = 'Status: running (demo)';
-            lastTime = performance.now();
-            animate();
-            setTimeout(()=> {
-                running = false;
-                cancelAnimationFrame(animationId);
-                playPauseBtn.textContent = 'Play';
-                statusText.textContent = 'Status: paused';
-            }, 1600);
-        }
-        // Run a short demo after load
-        setTimeout(runDemoPulse, 600);
-
-        // Handle window click to clear info highlight
-        document.getElementById('canvasWrap').addEventListener('click', (e) => {
-            // clicking empty area clears info
-            if(e.target.closest('.part')) return;
-            infoBox.innerHTML = '<div class="info" id="introText">Click any engine part to see details here. Use Play to run the 4-stroke animation.</div>';
-        });
-
-        // Expose some internal state for debugging (dev only)
-        window.__engineViz = { getAngle:()=>angle, setAngle:(a)=>{ angle=a; renderFrame(); }, parts };
-
-        // Accessibility: announce rpm changes in status text
-        rpmRange.addEventListener('change', () => {
-            statusText.textContent = 'RPM set to ' + rpm;
-            setTimeout(()=> {
-                statusText.textContent = running ? 'Status: running' : 'Status: paused';
-            }, 1200);
-        });
-
-        // END of main script
-
-        /* Extra educational notes (lightweight, not too long) */
-        /*
-            The visual model above simulates a single-cylinder 4-stroke engine:
-            - Intake stroke: intake valve opens, piston moves down, drawing air-fuel mixture.
-            - Compression stroke: both valves closed, piston moves up compressing mixture.
-            - Power stroke: near top, spark plug ignites mixture producing expansion force that pushes piston down.
-            - Exhaust stroke: exhaust valve opens, piston moves up, expelling combustion gases.
-
-            The animation uses a simplified slider-crank kinematic model. Real engines have valve timing (camshafts),
-            inertia, damping, combustion pressure curves, lubrication, and many more complexities not modeled here.
-        */
-
+        // start paused by default
+    })();
     </script>
-
-    <!--
-        Note: This file is intentionally structured for clarity and interactivity.
-        Clickable SVG parts are marked with class="part" and data-part attributes.
-        The JS uses a simplified kinematic model for educational animation.
-    -->
-
 </body>
 </html>
